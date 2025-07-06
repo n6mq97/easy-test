@@ -26,6 +26,9 @@ RUN npm run build
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nextjs -u 1001
 
+# Создаем директорию для данных
+RUN mkdir -p /app/data
+
 # Меняем владельца файлов
 RUN chown -R nextjs:nodejs /app
 

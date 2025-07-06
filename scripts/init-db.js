@@ -1,12 +1,13 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+const Database = require("better-sqlite3");
+const path = require("path");
 
 // Создаем базу данных
-const dbPath = path.join(process.cwd(), 'database.sqlite');
+const dbPath =
+  process.env.DATABASE_PATH || path.join(process.cwd(), "database.sqlite");
 const db = new Database(dbPath);
 
 // Включаем WAL режим для лучшей производительности
-db.pragma('journal_mode = WAL');
+db.pragma("journal_mode = WAL");
 
 // Создаем таблицы
 db.exec(`
@@ -44,7 +45,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_tests_section ON tests (section);
 `);
 
-console.log('✅ База данных инициализирована успешно!');
-console.log('📁 Файл базы данных:', dbPath);
+console.log("✅ База данных инициализирована успешно!");
+console.log("📁 Файл базы данных:", dbPath);
 
-db.close(); 
+db.close();

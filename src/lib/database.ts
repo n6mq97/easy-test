@@ -1,7 +1,9 @@
 import Database from "better-sqlite3";
 import path from "path";
 
-const dbPath = path.join(process.cwd(), "database.sqlite");
+// Используем переменную окружения для пути к базе данных или путь по умолчанию
+const dbPath =
+  process.env.DATABASE_PATH || path.join(process.cwd(), "database.sqlite");
 const db = new Database(dbPath);
 
 // Типы для базы данных
