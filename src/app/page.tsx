@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 interface User {
@@ -13,6 +13,9 @@ export default function Home() {
   const [users, setUsers] = useState<User[]>([]);
   const [newUsername, setNewUsername] = useState('');
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -49,6 +52,44 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Failed to create user:', error);
+    }
+  };
+
+  const handleUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const file = fileInputRef.current?.files?.[0];
+
+    if (!file) {
+      setUploadStatus('Будь ласка, виберіть файл.');
+      return;
+    }
+
+    setUploading(true);
+    setUploadStatus('Завантаження...');
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/db/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        setUploadStatus('Базу даних успішно оновлено.');
+        if(fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      } else {
+        const errorText = await response.text();
+        setUploadStatus(`Помилка: ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Failed to upload database:', error);
+      setUploadStatus('Помилка підключення до сервера.');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -151,6 +192,54 @@ export default function Home() {
               </div>
             </div>
           </div>
+          
+          {/* Керування БД */}
+          <div className="bg-white rounded-lg shadow-lg p-6 mt-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              Керування базою даних
+            </h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-medium text-gray-800 mb-2">Експорт</h3>
+                <p className="text-sm text-gray-600 mb-3">Збережіть поточну базу даних у файл.</p>
+                <a
+                  href="/api/db/download"
+                  download="database.sqlite"
+                  className="inline-block w-full text-center bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+                >
+                  Скачати БД
+                </a>
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-800 mb-2">Імпорт</h3>
+                <p className="text-sm text-gray-600 mb-3">Замініть поточну базу даних, завантаживши файл. Увага: поточні дані буде втрачено.</p>
+                <form onSubmit={handleUpload} className="space-y-3">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="block w-full text-sm text-gray-500
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-blue-50 file:text-blue-700
+                      hover:file:bg-blue-100"
+                    accept=".sqlite"
+                  />
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400"
+                    disabled={uploading}
+                  >
+                    {uploading ? 'Завантаження...' : 'Завантажити БД'}
+                  </button>
+                </form>
+                {uploadStatus && (
+                  <p className="text-sm text-gray-600 mt-3">{uploadStatus}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
